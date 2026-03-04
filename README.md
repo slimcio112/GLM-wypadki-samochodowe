@@ -1,7 +1,7 @@
 # Automatyzacja raportu szkodowości w pythonie
 
 ## O projekcie
-Prosty skrypt w pythonie automatyzujący proces wyliczania wskaźnika szkodowości na podstawie dwóch plików `polisy.csv` i `szkody.csv`. Zastępuje on manualną pracę np w MS Excel (używanie funkcji VLOOKUP i Tabel przestawnych).
+Prosty skrypt w Pythonie automatyzujący proces wyliczania wskaźnika szkodowości na podstawie dwóch plików `polisy.csv` i `szkody.csv`. Zastępuje on manualną pracę np w MS Excel (używanie funkcji VLOOKUP i Tabel przestawnych).
 
 ## Rozwiązanie
 Skrypt wykonuje następujące kroki:
