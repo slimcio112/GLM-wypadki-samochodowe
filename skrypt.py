@@ -1,6 +1,8 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
 
 def wczytanie_danych(sciezka):
     print(f"Wczytywanie danych z {sciezka}")
@@ -23,7 +25,7 @@ def tabela_szkodowosc(df):
         values = 'total_claim_amount',
         index = 'auto_make',
         columns=['grupa_wiekowa','insured_sex'],
-        aggfunc='mean'
+        aggfunc='median'
     )
     return pivot
 
@@ -37,9 +39,56 @@ def heatmap(tabela):
     plt.tight_layout()
     plt.show()
 
+
+def sprawdz_rozklad_zmiennej(df):
+    plt.figure(figsize=(10, 6))
+    
+    sns.histplot(df['total_claim_amount'], bins=100, kde=True, color='purple')
+    
+    plt.title("Rozkład wypłaconych odszkodowań (Total Claim Amount)")
+    plt.xlabel("Kwota wypłaty ($)")
+    plt.ylabel("Liczba wypadków")
+    plt.show()
+
+def obciecie_duze_szkody(df):
+    duze_szkody = df[df['total_claim_amount']>25000]
+    return duze_szkody
+# Widoczne na wykresie są dwa szczyty z czego drugi przypomina rozkład normalny lub prawoskośny
+
+# Przeprowadzamy analize TYLKO dla szkód większych niż 25 000 USD
+def model_duze_szkody(df):
+    formula = "total_claim_amount ~ age + I(age**2) + C(insured_sex) + C(auto_make)" # przewidujemy wypłacone odszkodowanie na podstawie wieku, płci i marki samochodu
+
+    model_duze = smf.glm(formula=formula, 
+                         data=df, 
+                         family=sm.families.Gamma(link=sm.families.links.Log()))
+    
+    wynik_duze = model_duze.fit()
+    print(wynik_duze.summary())
+    return wynik_duze
+
+def wykres_wynikow(wynik_duze):
+    wspolczynniki = wynik_duze.params.drop("Intercept")
+    
+    wspolczynniki.sort_values().plot(kind='barh', figsize=(8, 5))
+    
+    plt.axvline(x=0, color='red', linestyle='--')
+    plt.title("Wpływ cech na wielkość szkody (Współczynniki)")
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == "__main__":
     sciezka = "insurance_claims.csv"
-    dane = wczytanie_danych(sciezka)
-    dane = podzial_wiek(dane)
-    tabela = tabela_szkodowosc(dane)
-    heatmap(tabela)
+    dane = wczytanie_danych(sciezka) # Wczytujemy dane
+    dane = podzial_wiek(dane) # Tworzymy dodatkową kolumne (podział na wiek)
+    tabela = tabela_szkodowosc(dane) # Tworzymy tabele przestawną z podziałem na wiek oraz płeć i marke samochodu
+    heatmap(tabela) # Szkicujemy heatmape
+
+    sprawdz_rozklad_zmiennej(dane) # Szkicujemy rozkład wypłaconych ubezpieczeń
+    dane_duze_szkody = obciecie_duze_szkody(dane) # usuwamy wszystkie wiersze gdzie wyplacona kwota jest mniejsza niz 25 000 USD
+    sprawdz_rozklad_zmiennej(dane_duze_szkody)
+    print(f"Współczynnik skośności: {dane_duze_szkody['total_claim_amount'].skew()}") # współczynnik ~= 0.27 zatem dane są lekko prawo skośne
+
+    model_prawy_pik = model_duze_szkody(dane_duze_szkody)
+    wykres_wynikow(model_prawy_pik)
