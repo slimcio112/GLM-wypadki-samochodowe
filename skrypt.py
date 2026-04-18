@@ -58,7 +58,7 @@ def obciecie_duze_szkody(df):
 
 # Przeprowadzamy analize TYLKO dla szkód większych niż 25 000 USD
 def model_duze_szkody(df):
-    formula = "nadwyzka ~ age + I(age**2) + C(insured_sex) + C(auto_make)" # przewidujemy wypłacone odszkodowanie na podstawie wieku, płci i marki samochodu
+    formula = "nadwyzka ~ C(collision_type) + bodily_injuries + number_of_vehicles_involved + age + I(age**2) + C(insured_sex) + C(auto_make)" # przewidujemy wypłacone odszkodowanie na podstawie wieku, płci i marki samochodu
 
     model_duze = smf.glm(formula=formula, 
                          data=df, 
